@@ -7,7 +7,8 @@
       "Bash(gh repo *)",
       "Bash(chmod +x /Users/shakir/storageCleanerMac/run.sh)",
       "Bash(git push *)",
-      "Bash(swift build *)"
+      "Bash(swift build *)",
+      "Bash(sh run.sh p)"
     ]
   }
 }
