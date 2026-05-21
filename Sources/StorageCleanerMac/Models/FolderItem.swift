@@ -4,7 +4,9 @@ struct FolderItem: Identifiable, Hashable {
     let id = UUID()
     let url: URL
     let name: String
-    let size: Int64
+    var size: Int64
+    var isSizeReady: Bool   // false = still calculating
+    var isCachedSize: Bool  // true = size came from cache, recalculating in background
     let isDirectory: Bool
 
     var formattedSize: String {

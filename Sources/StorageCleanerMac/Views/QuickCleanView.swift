@@ -3,6 +3,7 @@ import SwiftUI
 struct QuickCleanView: View {
     @StateObject private var scanner = QuickCleanScanner()
     @State private var confirmTarget: AppCleanTarget?
+    @State private var browseTarget: AppCleanTarget?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,6 +31,8 @@ struct QuickCleanView: View {
             } else {
                 List(scanner.targets) { target in
                     AppCleanRow(target: target) {
+                        browseTarget = target
+                    } onClean: {
                         confirmTarget = target
                     }
                 }
@@ -46,6 +49,12 @@ struct QuickCleanView: View {
                     Label("Scan", systemImage: "magnifyingglass")
                 }
                 .disabled(scanner.isScanning)
+            }
+        }
+        .sheet(item: $browseTarget) { target in
+            AppFileBrowserSheet(target: target) {
+                confirmTarget = target
+                browseTarget = nil
             }
         }
         .confirmationDialog(
@@ -88,8 +97,11 @@ struct QuickCleanView: View {
     }
 }
 
+// MARK: - Row
+
 private struct AppCleanRow: View {
     let target: AppCleanTarget
+    let onBrowse: () -> Void
     let onClean: () -> Void
 
     var body: some View {
@@ -113,6 +125,10 @@ private struct AppCleanRow: View {
                 .font(.subheadline.monospacedDigit())
                 .foregroundStyle(.orange)
 
+            Button("Files", action: onBrowse)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
             Button("Clean", action: onClean)
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
@@ -121,3 +137,57 @@ private struct AppCleanRow: View {
         .padding(.vertical, 4)
     }
 }
+
+// MARK: - File browser sheet
+
+private struct AppFileBrowserSheet: View {
+    let target: AppCleanTarget
+    let onClean: () -> Void
+    @StateObject private var scanner = FolderScanner()
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Image(systemName: target.icon)
+                    .foregroundStyle(.blue)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(target.appName)
+                        .font(.headline)
+                    Text("Cache & temporary files")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .buttonStyle(.bordered)
+                Button("Clean All") {
+                    onClean()
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+            }
+            .padding()
+
+            Divider()
+
+            FolderBrowserView(scanner: scanner)
+        }
+        .frame(width: 700, height: 480)
+        .onAppear {
+            // Navigate to the first existing path for this target
+            for rawPath in target.paths {
+                let url = URL(fileURLWithPath: rawPath)
+                var isDir: ObjCBool = false
+                if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
+                    scanner.pathStack = [url]
+                    scanner.refresh()
+                    return
+                }
+            }
+        }
+    }
+}
+

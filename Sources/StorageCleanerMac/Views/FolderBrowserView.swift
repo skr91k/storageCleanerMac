@@ -15,11 +15,16 @@ struct FolderBrowserView: View {
                 scanner.navigateTo(stackIndex: index)
             }
 
+            // Thin calculation progress bar
+            if scanner.isCalculatingSizes {
+                calculatingBanner
+            }
+
             Divider()
 
-            if scanner.isScanning {
+            if scanner.isLoadingList {
                 Spacer()
-                ProgressView("Scanning…")
+                ProgressView("Loading…")
                     .progressViewStyle(.circular)
                 Spacer()
             } else if scanner.items.isEmpty {
@@ -57,7 +62,6 @@ struct FolderBrowserView: View {
             }
 
             Divider()
-
             statusBar
         }
         .confirmationDialog(
@@ -77,6 +81,21 @@ struct FolderBrowserView: View {
         } message: { item in
             Text("Permanently removes \(item.formattedSize).")
         }
+    }
+
+    private var calculatingBanner: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .scaleEffect(0.6)
+                .frame(width: 14, height: 14)
+            Text("Calculating sizes…")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
+        .background(Color.accentColor.opacity(0.07))
     }
 
     private var statusBar: some View {
