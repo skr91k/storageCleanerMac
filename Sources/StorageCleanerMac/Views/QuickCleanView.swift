@@ -49,22 +49,21 @@ struct QuickCleanView: View {
             }
         }
         .confirmationDialog(
-            "Clean "\(confirmTarget?.appName ?? "")"?",
+            "Clean App Cache",
             isPresented: Binding(
                 get: { confirmTarget != nil },
                 set: { if !$0 { confirmTarget = nil } }
             ),
-            titleVisibility: .visible
-        ) {
-            Button("Clean \(confirmTarget?.formattedSize ?? "")", role: .destructive) {
-                if let t = confirmTarget {
-                    try? scanner.clean(t)
-                    confirmTarget = nil
-                }
+            titleVisibility: .visible,
+            presenting: confirmTarget
+        ) { target in
+            Button("Clean \(target.appName) (\(target.formattedSize))", role: .destructive) {
+                try? scanner.clean(target)
+                confirmTarget = nil
             }
             Button("Cancel", role: .cancel) { confirmTarget = nil }
-        } message: {
-            Text("Cache and temporary files will be removed. The app will rebuild them as needed.")
+        } message: { target in
+            Text("Cache and temporary files for \(target.appName) will be removed. The app will rebuild them as needed.")
         }
         .onAppear { Task { await scanner.scan() } }
     }

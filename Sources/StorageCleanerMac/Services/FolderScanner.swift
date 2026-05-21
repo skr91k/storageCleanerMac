@@ -65,7 +65,7 @@ class FolderScanner: ObservableObject {
         isScanning = false
     }
 
-    private static func scanDirectory(_ url: URL) -> [FolderItem] {
+    nonisolated private static func scanDirectory(_ url: URL) -> [FolderItem] {
         let fm = FileManager.default
         guard let contents = try? fm.contentsOfDirectory(
             at: url,
@@ -93,17 +93,18 @@ class FolderScanner: ObservableObject {
         }
     }
 
-    private static func totalSize(of url: URL) -> Int64 {
+    nonisolated private static func totalSize(of url: URL) -> Int64 {
         let fm = FileManager.default
+        let keys: Set<URLResourceKey> = [.fileSizeKey, .isRegularFileKey]
         guard let enumerator = fm.enumerator(
             at: url,
-            includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
-            options: [.skipsHiddenFiles, .skipsSymbolicLinks]
+            includingPropertiesForKeys: Array(keys),
+            options: [.skipsHiddenFiles]
         ) else { return 0 }
 
         var total: Int64 = 0
         for case let fileURL as URL in enumerator {
-            if let v = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
+            if let v = try? fileURL.resourceValues(forKeys: keys),
                v.isRegularFile == true {
                 total += Int64(v.fileSize ?? 0)
             }

@@ -57,24 +57,26 @@ class QuickCleanScanner: ObservableObject {
         targets.removeAll { $0.id == target.id }
     }
 
-    private static func directorySize(_ url: URL) -> Int64 {
+    nonisolated private static func directorySize(_ url: URL) -> Int64 {
         let fm = FileManager.default
         var isDir: ObjCBool = false
         guard fm.fileExists(atPath: url.path, isDirectory: &isDir) else { return 0 }
 
         if !isDir.boolValue {
-            return Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+            let keys: Set<URLResourceKey> = [.fileSizeKey]
+            return Int64((try? url.resourceValues(forKeys: keys).fileSize) ?? 0)
         }
 
+        let keys: Set<URLResourceKey> = [.fileSizeKey, .isRegularFileKey]
         guard let enumerator = fm.enumerator(
             at: url,
-            includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
-            options: [.skipsHiddenFiles, .skipsSymbolicLinks]
+            includingPropertiesForKeys: Array(keys),
+            options: [.skipsHiddenFiles]
         ) else { return 0 }
 
         var total: Int64 = 0
         for case let file as URL in enumerator {
-            if let v = try? file.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
+            if let v = try? file.resourceValues(forKeys: keys),
                v.isRegularFile == true {
                 total += Int64(v.fileSize ?? 0)
             }

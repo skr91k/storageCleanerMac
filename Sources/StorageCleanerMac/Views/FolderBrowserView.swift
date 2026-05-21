@@ -61,22 +61,21 @@ struct FolderBrowserView: View {
             statusBar
         }
         .confirmationDialog(
-            "Delete "\(confirmDelete?.name ?? "")"?",
+            "Delete File",
             isPresented: Binding(
                 get: { confirmDelete != nil },
                 set: { if !$0 { confirmDelete = nil } }
             ),
-            titleVisibility: .visible
-        ) {
-            Button("Move to Trash", role: .destructive) {
-                if let item = confirmDelete {
-                    try? scanner.delete(item)
-                    confirmDelete = nil
-                }
+            titleVisibility: .visible,
+            presenting: confirmDelete
+        ) { item in
+            Button("Delete \"\(item.name)\"", role: .destructive) {
+                try? scanner.delete(item)
+                confirmDelete = nil
             }
             Button("Cancel", role: .cancel) { confirmDelete = nil }
-        } message: {
-            Text("This will permanently remove \(confirmDelete?.formattedSize ?? "").")
+        } message: { item in
+            Text("Permanently removes \(item.formattedSize).")
         }
     }
 
